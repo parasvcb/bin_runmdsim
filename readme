@@ -9,3 +9,16 @@ above is the crontab automator
 
 Likely cronjobkiller needs arguemnets for /tmp and plots location
 further onctrsin the functions and see if classes and objects for analysis can be supplemented
+
+
+git config --global user.name "parasvcb"
+git config --global user.email "parasvcb"
+git remote add origin https://github.com/parasvcb/bin_runmdsim.git
+
+
+git clone https://github.com/git/git.git
+git config --list
+git add .
+git commit -m ‘your_message’
+git push origin master
+
