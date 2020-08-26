@@ -12,8 +12,7 @@
 
 structure          ../before_mini/structure.psf
 coordinates        ../before_mini/equilibrated.pdb
-outputName         ../dcd_outputs/pull/force_pull
-
+set outputName         ../dcd_outputs/pull/force_pull
 
 # Continuing a job from the restart files
 if {1} {
@@ -53,10 +52,10 @@ stepspercycle       20
 
 
 # Constant Temperature Control
-langevin            on    ;# do langevin dynamics
-langevinDamping     1     ;# damping coefficient (gamma) of 5/ps
-langevinTemp        300
-langevinHydrogen    no    ;# don't couple langevin bath to hydrogens
+langevin            off    ;# do langevin dynamics
+#langevinDamping     1     ;# damping coefficient (gamma) of 5/ps
+#langevinTemp        300
+#langevinHydrogen    no    ;# don't couple langevin bath to hydrogens
 
 
 # Constant Pressure Control (variable volume)
@@ -67,7 +66,7 @@ dcdfreq              500
 restartfreq          500
 
 binaryoutput            yes
-outputname                      $outputname
+outputname          $outputName
 binaryrestart       yes
 
 

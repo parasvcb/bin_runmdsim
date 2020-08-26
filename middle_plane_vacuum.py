@@ -43,7 +43,7 @@ def prepare_smd(tclfile, layoutfile):
         current_working_directory, 'tcl_files', layoutfile)
     filebranch = os.path.join(os.getcwd(), 'smdprepare.tcl')
     subprocess.check_output(['cp', smd_file_master, filebranch])
-    modules.smd_pull(address=os.getcwd(), layoutfile=smd_layout_file,
+    modules.smd_pull(default_cmd_str=default_cmd_str, address=os.getcwd(), layoutfile=smd_layout_file,
                      filebranch=filebranch)
 
 
@@ -70,11 +70,11 @@ for i in [os.path.abspath(j) for j in os.listdir(directoryStructure) if j[:4] ==
     modules.minimization(default_cmd_str)
 
     temp_equil(polymer)
-    # if int(smd_pulling):
-    #     prepare_smd(fileSMD_harmonic,fileSMD_configlayout)
-    #     pass
-    # else:
-    #     pass
-    #     # press_equil_series(int(pressure_equil_runs))
-    # modules.writetofile("done")
+    if int(smd_pulling):
+        prepare_smd(fileSMD_harmonic, fileSMD_configlayout)
+    else:
+        pass
+        # press_equil_series(int(pressure_equil_runs))
+    modules.writetofile("done")
+    # break
 modules.writetofile("done")

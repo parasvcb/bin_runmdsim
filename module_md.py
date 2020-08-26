@@ -17,7 +17,7 @@ def runit(default_cmd_str, configuration, logfile):
     try:
         res = subprocess.check_output(
             default_cmd_str+configuration+logfile, shell=True)
-        if 'Bond' in res:
+        if 'Bond' in res.decode('utf-8'):
             res = subprocess.check_output(
                 not_default_cmd_str+configuration+logfile, shell=True)
     except Exception as E:
@@ -233,6 +233,7 @@ def writesmddirection(config=False,  smd_layout_file=False, filebranch=False):
         ["vmd", "-dispdev", "text", "-e", filebranch])
     os.remove(filebranch)
     direction = direction.decode('utf-8').split("\n")[-4]
+    # print(direction)
     with open(smd_layout_file) as fin:
         dat = fin.read()
     dire = 'SMDDir	%s' % direction
@@ -241,7 +242,7 @@ def writesmddirection(config=False,  smd_layout_file=False, filebranch=False):
     return
 
 
-def smd_pull(address=False, layoutfile=False, filebranch=False):
+def smd_pull(default_cmd_str=False, address=False, layoutfile=False, filebranch=False):
     if not os.path.isdir("dcd_outputs/pull"):
         os.makedirs("dcd_outputs/pull")
     condition1 = os.path.isfile("configurations/force.conf")
@@ -254,10 +255,12 @@ def smd_pull(address=False, layoutfile=False, filebranch=False):
                           smd_layout_file=layoutfile, filebranch=filebranch)
         try:
             writetofile(address)
-            runit(' configurations/force.conf ', ' >logs/force.log ')
+            print("done")
+            runit(default_cmd_str=default_cmd_str, configuration=' configurations/force.conf ',
+                  logfile=' >logs/force.log ')
             # res = subprocess.check_output('%s  configurations/force.conf >logs/force.log' % (default_cmd_str), shell=True)
         except Exception as E:
-            print("**Error in smdpulling %s case, Error is %s" % (add, E))
+            print("**Error in smdpulling %s case, Error is %s" % (address, E))
     else:
         print(
             "Please clear the folder of smd pull files or create desired configuration")
