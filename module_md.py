@@ -6,6 +6,27 @@ import os
 import sys
 
 
+def writetofile(stringtext):
+    with open("/tmp/cronadd", "w") as fin:
+        fin.write("%s" % stringtext)
+
+
+def runit(default_cmd_str, configuration, logfile):
+    cores = re.search(r'\+p\s?\d+', default_cmd_str).group()
+    not_default_cmd_str = default_cmd_str.replace(cores, ' ')
+    try:
+        res = subprocess.check_output(
+            default_cmd_str+configuration+logfile, shell=True)
+        if 'Bond' in res:
+            res = subprocess.check_output(
+                not_default_cmd_str+configuration+logfile, shell=True)
+    except Exception as E:
+        print("likely parallelization error, on 1 cores: %s" % E)
+        res = subprocess.check_output(
+            not_default_cmd_str+configuration+logfile, shell=True)
+    return
+
+
 def makdirectory(direct):
     if not os.path.isdir(direct):
         os.makedirs(direct)
@@ -14,44 +35,45 @@ def makdirectory(direct):
         sys.exit()
 
 
-def runtheprogram(stringbegin, confile, logscount, directtocreate,iftodelete=False):
+def runtheprogram(stringbegin, confile, logscount, directtocreate, iftodelete=False):
     if not os.path.isfile('logs/prod%s.log' % logscount):
         print("all clear have a look at %s" % confile)
         makdirectory(directtocreate)
         print("%s  %s >logs/prod%s.log\n Will be run" %
               (stringbegin, confile, logscount))
-        flag=input("Press 1 for continue running 0 for exit: ")
+        flag = input("Press 1 for continue running 0 for exit: ")
         if int(flag):
-            subprocess.check_output('%s  %s >logs/prod%s.log' % (stringbegin, confile, logscount), shell=True)
+            subprocess.check_output('%s  %s >logs/prod%s.log' %
+                                    (stringbegin, confile, logscount), shell=True)
         else:
-            print ("removing",directtocreate)
+            print("removing", directtocreate)
             os.rmdir(directtocreate)
-            print ("removing",confile)
+            print("removing", confile)
             os.remove(confile)
-            print ("removing",iftodelete)
+            print("removing", iftodelete)
             os.remove(iftodelete)
     else:
         print("Please check log file exists already")
         sys.exit()
 
 
-def countframes(filelis, confile, runtimeinns,totalrundone=False):
+def countframes(filelis, confile, runtimeinns, totalrundone=False):
     with open(confile) as fin:
         dat = fin.read()
         freq = int(re.search(r'dcdfreq\s+\d+', dat).group().split()[-1])
         ts = int(re.search(r'^timestep\s+\d+', dat,
                            re.MULTILINE).group().split()[-1])
 
-    if totalrundone==False:
-      total=0
-      for i in filelis:
-        tet = subprocess.check_output(
-            "$HOME/bin/./catdcd " + os.path.join('dcd_outputs', i, 'pro.dcd'), shell=True)
-        tet = tet.decode("utf-8")
-        frames = int(re.search(r'Read \d+ frames', tet).group().split()[1])
-        total += frames
-      totalrundone = total * ((freq * ts) / 1000000)
-    
+    if totalrundone == False:
+        total = 0
+        for i in filelis:
+            tet = subprocess.check_output(
+                "$HOME/bin/./catdcd " + os.path.join('dcd_outputs', i, 'pro.dcd'), shell=True)
+            tet = tet.decode("utf-8")
+            frames = int(re.search(r'Read \d+ frames', tet).group().split()[1])
+            total += frames
+        totalrundone = total * ((freq * ts) / 1000000)
+
     # every frame represents TS*freq/10^6 ns,
     leftoutrun = runtimeinns - totalrundone
     if leftoutrun > 0:
@@ -62,10 +84,10 @@ def countframes(filelis, confile, runtimeinns,totalrundone=False):
 
 
 def sortedres(dirref):
-    #print (dirref)
+    # print (dirref)
     dirlis = []
     for direct in dirref:
-        #print (direct)
+        # print (direct)
         if "pro" in direct:
             dirlis += [direct]
     dirlis.sort()
@@ -99,14 +121,14 @@ def lframe(dcd, pdb, filename):
         tet = subprocess.check_output("$HOME/bin/./catdcd " + dcd, shell=True)
         tet = tet.decode("utf-8")
         frames = int(re.search(r'Read \d+ frames', tet).group().split()[1])
-        subprocess.check_output("$HOME/bin/./catdcd -o test.dcd -first  %s -last %s %s" % (frames - 2, frames, dcd), shell = True)
+        subprocess.check_output(
+            "$HOME/bin/./catdcd -o test.dcd -first  %s -last %s %s" % (frames - 2, frames, dcd), shell=True)
         t = md.load_dcd("test.dcd", top=pdb)
         lastframedcd = md.load_dcd("test.dcd", top=pdb, frame=t.n_frames - 1)
         # lastframedcd.remove_solvent().save_pdb("/tmp/last.pdb")
         lastframedcd.save_pdb(filename)
     else:
         print("File exists already: %s" % filename)
-        sys.exit()
     return True
 
 
@@ -128,7 +150,7 @@ def createconfiguration(confcount, lconf, restarttimestep, runneeded, input_name
         sys.exit()
 
 
-def production_series(totalneededruntime, stringbegin,doneTS=False):
+def production_series(totalneededruntime, stringbegin, doneTS=False):
     # boom long runs
     # ready_p11.pdb for prod..
     # pro_re.pdb for production resumes, pro_re.conf, pro_re dcd folder, pro_re.log and hence ahead
@@ -140,7 +162,8 @@ def production_series(totalneededruntime, stringbegin,doneTS=False):
 
     if dcdcount == confcount == logscount:
         restarttimestep = getTS('logs/%s' % llog)
-        runneeded =  countframes([i for i in os.listdir("dcd_outputs") if 'pro' in i], 'configurations/%s' % lconf, totalneededruntime, totalrundone=doneTS)
+        runneeded = countframes([i for i in os.listdir("dcd_outputs") if 'pro' in i],
+                                'configurations/%s' % lconf, totalneededruntime, totalrundone=doneTS)
         inputpdbref = "before_mini/%s.pdb" % prevcount(
             dcdcount) if dcdcount > 1 else "before_mini/prod1.pdb"
         outputpdb = "before_mini/prod%s.pdb" % dcdcount
@@ -159,14 +182,15 @@ def production_series(totalneededruntime, stringbegin,doneTS=False):
         sys.exit()
 
 
-def temp_equil(default_cmd_str):
-    if not os.path.isfile("before_mini/ready_p1.pdb"):
-        if not os.path.isdir("dcd_outputs/temp_equil"):
-            os.makedirs("dcd_outputs/temp_equil")
-        subprocess.check_output(
-            '%s  configurations/temp_equil.conf >logs/temp_equil.log' % default_cmd_str, shell=True)
-        lframe("dcd_outputs/temp_equil/equil_t.dcd",
-               "before_mini/coordmini.pdb", "before_mini/ready_p1.pdb")
+def temp_equil(default_cmd_str, lastframe="before_mini/ready_p1.pdb", dcdFolder="dcd_outputs/temp_equil",
+               configFile=' configurations/temp_equil.conf ', logFile=' >logs/temp_equil.log '):
+    if not os.path.isfile(lastframe):
+        if not os.path.isdir(dcdFolder):
+            os.makedirs(dcdFolder)
+        writetofile("done")
+        runit(default_cmd_str, configFile, logFile)
+        dcdFile = os.path.join(dcdFolder, "equil_t.dcd")
+        lframe(dcdFile, "before_mini/coordmini.pdb", lastframe)
     else:
         print("temp_eq_done")
 
@@ -175,8 +199,9 @@ def minimization(default_cmd_str):
     if not os.path.isfile("before_mini/coordmini.pdb"):
         if not os.path.isdir("dcd_outputs/o_m"):
             os.makedirs("dcd_outputs/o_m")
-        subprocess.check_output(
-            '%s  configurations/minimization.conf >logs/mini.log' % default_cmd_str, shell=True)
+        configFile = ' configurations/minimization.conf '
+        logFile = ' >logs/mini.log '
+        runit(default_cmd_str, configFile, logFile)
         lframe("dcd_outputs/o_m/mini.dcd",
                "before_mini/ionized.pdb", "before_mini/coordmini.pdb")
     else:
@@ -201,3 +226,38 @@ def press_equil_series(default_cmd_str):
             lframe(dcd, pdb, filename)
         else:
             print("press_eq%s_done" % (i + 1))
+
+
+def writesmddirection(config=False,  smd_layout_file=False, filebranch=False):
+    direction = subprocess.check_output(
+        ["vmd", "-dispdev", "text", "-e", filebranch])
+    os.remove(filebranch)
+    direction = direction.decode('utf-8').split("\n")[-4]
+    with open(smd_layout_file) as fin:
+        dat = fin.read()
+    dire = 'SMDDir	%s' % direction
+    with open(config, 'w') as fout:
+        fout.write("%s\n%s\nSMDOutputFreq	   100\nrun 40000000" % (dat, dire))
+    return
+
+
+def smd_pull(address=False, layoutfile=False, filebranch=False):
+    if not os.path.isdir("dcd_outputs/pull"):
+        os.makedirs("dcd_outputs/pull")
+    condition1 = os.path.isfile("configurations/force.conf")
+    condition2 = True if len(os.listdir(
+        "dcd_outputs/pull")) == 0 else False
+    if condition1 and condition2:
+        # set the run
+        # writesmdfiledirection
+        writesmddirection(config="configurations/force.conf",
+                          smd_layout_file=layoutfile, filebranch=filebranch)
+        try:
+            writetofile(address)
+            runit(' configurations/force.conf ', ' >logs/force.log ')
+            # res = subprocess.check_output('%s  configurations/force.conf >logs/force.log' % (default_cmd_str), shell=True)
+        except Exception as E:
+            print("**Error in smdpulling %s case, Error is %s" % (add, E))
+    else:
+        print(
+            "Please clear the folder of smd pull files or create desired configuration")
