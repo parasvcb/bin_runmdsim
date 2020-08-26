@@ -3,3 +3,9 @@ production modules are pending, with detailed automation and no accidental log f
 common function to run and remove tcl scripts is also pending 
 and detailed functionalities is missing with appropeiate data mixing
 
+composed with cronjobkiller for smd
+#*/10 * * * * ~/miniconda3/bin/python ~/bin/cronjobkiller.py >> /tmp/cronjoblogs.log
+above is the crontab automator
+
+Likely cronjobkiller needs arguemnets for /tmp and plots location
+further onctrsin the functions and see if classes and objects for analysis can be supplemented
