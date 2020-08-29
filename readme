@@ -22,3 +22,9 @@ git add .
 git commit -m ‘your_message’
 git push origin master
 
+
+
+
+29aug 2020 (form menton 10:44 am)
+make sure while changing module runit, add timeout prior exiting, if error and timeout exceeding 10 mins, have a relook and skip , else start looping down ,
+till comfortable number of parallelizable cores are fit in, else afer 1 node, it wont run, severly looking for manual manipulations
