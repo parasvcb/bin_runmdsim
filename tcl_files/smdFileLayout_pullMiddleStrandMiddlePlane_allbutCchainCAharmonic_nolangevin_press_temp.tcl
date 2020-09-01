@@ -73,13 +73,13 @@ binaryrestart       yes
 # Fixed Atoms Constraint (set PDB beta-column to 1)
 if {1} {
 constraints on
-consRef         ../before_mini/ref_smd_onlyEdgesConstrained_from_T_equilibrated.pdb
-consKFile       ../before_mini/ref_smd_onlyEdgesConstrained_from_T_equilibrated.pdb
+consRef         ../before_mini/ref_smd_allbutCchainHarmonic_from_T_equilibrated.pdb
+consKFile       ../before_mini/ref_smd_allbutCchainHarmonic_from_T_equilibrated.pdb
 consKCol        B
 constraintScaling 2
 }
 SMD                on
-SMDFile            ../before_mini/ref_smd_onlyEdgesConstrained_from_T_equilibrated.pdb
+SMDFile            ../before_mini/ref_smd_allbutCchainHarmonic_from_T_equilibrated.pdb
 SMDk               10
 SMDVel             0.0000005
 #SMDVel             0.008

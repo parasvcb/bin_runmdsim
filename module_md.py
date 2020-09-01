@@ -4,6 +4,7 @@ import subprocess
 import re
 import os
 import sys
+import time
 
 
 def writetofile(stringtext):
@@ -11,19 +12,32 @@ def writetofile(stringtext):
         fin.write("%s" % stringtext)
 
 
-def runit(default_cmd_str, configuration, logfile):
-    cores = re.search(r'\+p\s?\d+', default_cmd_str).group()
-    not_default_cmd_str = default_cmd_str.replace(cores, ' ')
+def givecommand(namdexe=True, cores=True, configuration=True, logfile=True, gpu=False):
+    devices = '+devices 0' if gpu == True else '':
+    return '%s +p%s %s +idlepoll %s %s' % (namdexe, cores, devices, configuration, logfile)
+
+
+def hiddenrun(command):
+    stime = time.time()
+    timeact = 1
     try:
-        res = subprocess.check_output(
-            default_cmd_str+configuration+logfile, shell=True)
-        if 'Bond' in res.decode('utf-8'):
-            res = subprocess.check_output(
-                not_default_cmd_str+configuration+logfile, shell=True)
+        res = subprocess.check_output(command, shell=True)
     except Exception as E:
-        print("likely parallelization error, on 1 cores: %s" % E)
-        res = subprocess.check_output(
-            not_default_cmd_str+configuration+logfile, shell=True)
+        print('command %s gave error %s' % command, E)
+        timeact = time.time()-stime
+
+    return False if timeact/60 < 10 else True
+
+
+def runit(namdexe=True, cores=True, configuration=True, logfile=True, gpu=False):
+    for coreiter in range(cores, 0, -1):
+        command = givecommand(namdexe=namdexe, cores=coreiter,
+                              configuration=configuration, logfile=logfile, gpu=gpu)
+        result = hiddenrun(command)
+        if result == True:
+            # means it was abloe to run for atleast 10 mins, means error thereafter,cant troubleshoot
+            return
+    print("all combinations tried, something else other than parallelization is the fault")
     return
 
 
@@ -255,7 +269,6 @@ def smd_pull(default_cmd_str=False, address=False, layoutfile=False, filebranch=
                           smd_layout_file=layoutfile, filebranch=filebranch)
         try:
             writetofile(address)
-            print("done")
             runit(default_cmd_str=default_cmd_str, configuration=' configurations/force.conf ',
                   logfile=' >logs/force.log ')
             # res = subprocess.check_output('%s  configurations/force.conf >logs/force.log' % (default_cmd_str), shell=True)
